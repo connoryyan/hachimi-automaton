@@ -1,0 +1,1 @@
+法兰西诗歌剧 (2025). 如何从零开始学习制作哈基米音乐. [online] Bilibili.com. Available at: https://www.bilibili.com/video/BV1xp7vzKEyx/?spm_id_from=333.337.search-card.all.click&vd_source=2b11501bfb69d33f791694a81aefb164 [Accessed 2 Dec. 2025].

@@ -1,0 +1,6 @@
+__pycache__/
+
+.vscode/
+!.vscode/settings.json
+
+/output/
