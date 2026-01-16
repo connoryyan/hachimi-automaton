@@ -1,7 +1,7 @@
 from character_markov import *
 from pitchshift import *
 from reverb import *
-from animate import *
+from animate import draw
 import pretty_midi
 import mido
 import soundfile as sf
@@ -18,7 +18,7 @@ track_classes = ["哈基米", "哈基米only", "曼波only"]
 SIMULTANEOUS_THRESHOLD = 0.05
 
 start_time = 0
-end_time = 60
+end_time = 600
 
 sr = 44100
 frame_period = 5.0
@@ -211,22 +211,22 @@ events = build_events(note2word)
 with open(out_lyrics_path, "w", encoding="utf-8") as f:
     json.dump(events, f, ensure_ascii=False, indent=2)
 
-# preproc = {}
-# for cls in track_classes:
-#     for sample in alphabet[cls]:
-#         if sample in preproc:
-#             continue
-#         path = sample_path + f"{sample}.wav"
-#         preproc[sample] = preprocess_sample(path, cons_frame=cons_frames.get(sample, 8))
+preproc = {}
+for cls in track_classes:
+    for sample in alphabet[cls]:
+        if sample in preproc:
+            continue
+        path = sample_path + f"{sample}.wav"
+        preproc[sample] = preprocess_sample(path, cons_frame=cons_frames.get(sample, 8))
 
-# y_out = synthesize_midi(preproc, note2word, midi, start_time=start_time, end_time=end_time, octave_shift = octave_shift, volume_factor=volume_factor, ap_scale=0.05, sp_scale=1.0)
+y_out = synthesize_midi(preproc, note2word, midi, start_time=start_time, end_time=end_time, octave_shift = octave_shift, volume_factor=volume_factor, ap_scale=0.05, sp_scale=1.0)
 
-# y_out = vocal_low_cut(y_out, sr)
-# y_out = stereo_spread(y_out.T, spread_amount=0.15).T
-# y_out = multitap_delay(y_out, sr)
-# y_out = hf_damping(y_out, sr, cutoff=10000)
+y_out = vocal_low_cut(y_out, sr)
+y_out = stereo_spread(y_out.T, spread_amount=0.15).T
+y_out = multitap_delay(y_out, sr)
+y_out = hf_damping(y_out, sr, cutoff=10000)
 
-# y_out = soft_normalize(y_out, 0.95)
-# sf.write(out_path, y_out, sr)
-# print(f"音频已保存至 {out_path}")
+y_out = soft_normalize(y_out, 0.95)
+sf.write(out_path, y_out, sr)
+print(f"音频已保存至 {out_path}")
 
