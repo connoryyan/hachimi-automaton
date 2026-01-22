@@ -356,81 +356,82 @@ def mux_video_audio(video_path, audio_path, out_path):
     ]
     subprocess.run(cmd, check=True)
 
-with open(lyrics_path, "r", encoding="utf-8") as f:
-    events = json.load(f)
+if __name__ == "__main__":
+    with open(lyrics_path, "r", encoding="utf-8") as f:
+        events = json.load(f)
 
-# with open(model_path + "哈基米only.json", "r", encoding="utf-8") as f:
-#     model = json.load(f)
+    # with open(model_path + "哈基米only.json", "r", encoding="utf-8") as f:
+    #     model = json.load(f)
 
-# G, pos = draw(model, save_path=out_path + "track1.png")
+    # G, pos = draw(model, save_path=out_path + "track1.png")
 
-# slice_events = slice_events(events, t0=0.0, t1=600.0)
-# animate_markov_track(
-#     G=G,
-#     pos=pos,
-#     events=slice_events,
-#     track_id=1,
-#     out_path="./output/tchop35a/track1.mp4",
-#     gif_path="./assets/animation/帝宝挥拳加油.gif",
-#     fps=30,
-#     figsize=(9,16),
-#     gif_offset=0.1
-# )
+    # slice_events = slice_events(events, t0=0.0, t1=600.0)
+    # animate_markov_track(
+    #     G=G,
+    #     pos=pos,
+    #     events=slice_events,
+    #     track_id=1,
+    #     out_path="./output/tchop35a/track1.mp4",
+    #     gif_path="./assets/animation/帝宝挥拳加油.gif",
+    #     fps=30,
+    #     figsize=(9,16),
+    #     gif_offset=0.1
+    # )
 
-# video_path = "./output/tchop35a/track1.mp4"
-# audio_path = "./output/tchop35a/tchop35a.wav"
-# out_path   = "./output/tchop35a/track1_audio.mp4"
+    # video_path = "./output/tchop35a/track1.mp4"
+    # audio_path = "./output/tchop35a/tchop35a.wav"
+    # out_path   = "./output/tchop35a/track1_audio.mp4"
 
-# mux_video_audio(video_path, audio_path, out_path)
+    # mux_video_audio(video_path, audio_path, out_path)
 
-# #-------------------------------------------
+    # #-------------------------------------------
 
-# with open(model_path + "曼波only.json", "r", encoding="utf-8") as f:
-#     model = json.load(f)
+    # with open(model_path + "曼波only.json", "r", encoding="utf-8") as f:
+    #     model = json.load(f)
 
-# G, pos = draw(model, save_path=out_path + "track2.png")
+    # G, pos = draw(model, save_path=out_path + "track2.png")
 
-# slice_events = slice_events(events, t0=0.0, t1=600.0)
-# animate_markov_track(
-#     G=G,
-#     pos=pos,
-#     events=slice_events,
-#     track_id=2,
-#     out_path="./output/tchop35a/track2.mp4",
-#     gif_path="./assets/animation/曼波摇.gif",
-#     fps=30,
-#     figsize=(5, 16),
-#     gif_offset=0.13
-# )
+    # slice_events = slice_events(events, t0=0.0, t1=600.0)
+    # animate_markov_track(
+    #     G=G,
+    #     pos=pos,
+    #     events=slice_events,
+    #     track_id=2,
+    #     out_path="./output/tchop35a/track2.mp4",
+    #     gif_path="./assets/animation/曼波摇.gif",
+    #     fps=30,
+    #     figsize=(5, 16),
+    #     gif_offset=0.13
+    # )
 
-# video_path = "./output/tchop35a/track2.mp4"
-# audio_path = "./output/tchop35a/tchop35a.wav"
-# out_path   = "./output/tchop35a/track2_audio.mp4"
+    # video_path = "./output/tchop35a/track2.mp4"
+    # audio_path = "./output/tchop35a/tchop35a.wav"
+    # out_path   = "./output/tchop35a/track2_audio.mp4"
 
-# mux_video_audio(video_path, audio_path, out_path)
+    # mux_video_audio(video_path, audio_path, out_path)
 
 
-# #-------------------------------------------
+    # #-------------------------------------------
 
-with open(model_path + "哈基米.json", "r", encoding="utf-8") as f:
-    model = json.load(f)
+    with open(model_path + "哈基米.json", "r", encoding="utf-8") as f:
+        model = json.load(f)
 
-G, pos = draw(model, save_path=out_path + "track0.png")
+    G, pos = draw(model, save_path=out_path + "track0.png")
 
-slice_events = slice_events(events, t0=0.0, t1=600)
-animate_markov_track(
-    G=G,   
-    pos=pos,
-    events=slice_events,
-    track_id=0,
-    out_path="./output/tchop35a/track0.mp4",
-    gif_path="./assets/animation/帝宝摇.gif",
-    fps=30,
-    figsize=(10, 16)
-)
+    slice_events_list = slice_events(events, t0=0.0, t1=600)
+    animate_markov_track(
+        G=G,   
+        pos=pos,
+        events=slice_events_list,
+        track_id=0,
+        out_path="./output/tchop35a/track0.mp4",
+        gif_path="./assets/animation/帝宝摇.gif",
+        fps=30,
+        figsize=(10, 16)
+    )
 
-# video_path = "./output/tchop35a/track0.mp4"
-# audio_path = "./output/tchop35a/tchop35a.wav"
-# out_path   = "./output/tchop35a/track0_audio.mp4"
+    # video_path = "./output/tchop35a/track0.mp4"
+    # audio_path = "./output/tchop35a/tchop35a.wav"
+    # out_path   = "./output/tchop35a/track0_audio.mp4"
 
-# mux_video_audio(video_path, audio_path, out_path)
+    # mux_video_audio(video_path, audio_path, out_path)
