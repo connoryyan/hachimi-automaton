@@ -7,18 +7,110 @@ import mido
 import soundfile as sf
 import os
 
-midi_path = "./assets/midi/tchop35a/tchop35a.mid"
-out_path = "./output/tchop35a/tchop35a.wav"
-sample_path = "./assets/samples/"
-out_lyrics_path = "./output/tchop35a/tchop35a_lyrics.json"
-out_model_path = "./models/character_markov/"
+import glob
 
-track_classes = ["哈基米", "哈基米only", "曼波only"]
+def select_midi():
+    midi_files = sorted(glob.glob("./assets/midi/**/*.mid", recursive=True))
+    if not midi_files:
+        print("未在 assets/midi 中找到 MIDI 文件。")
+        exit(1)
+    
+    print("\n找到以下 MIDI 文件：")
+    for i, path in enumerate(midi_files):
+        print(f"[{i}] {path}")
+    
+    while True:
+        try:
+            choice = int(input("\n请输入要处理的 MIDI 文件编号: "))
+            if 0 <= choice < len(midi_files):
+                return midi_files[choice]
+        except ValueError:
+            pass
+        print("输入无效，请输入正确的数字。")
+
+midi_path = select_midi()
+# 获取不带扩展名的文件名作为项目名
+project_name = os.path.splitext(os.path.basename(midi_path))[0]
+output_dir = f"./output/{project_name}/"
+os.makedirs(output_dir, exist_ok=True)
+
+out_path = os.path.join(output_dir, f"{project_name}.wav")
+sample_path = "./assets/samples/"
+out_lyrics_path = os.path.join(output_dir, f"{project_name}_lyrics.json")
+out_model_path = "./models/character_markov/"
+os.makedirs(out_model_path, exist_ok=True)
+
+midi = pretty_midi.PrettyMIDI(midi_path)
+
+# --- 自动匹配轨道信息 ---
+n_tracks = len(midi.instruments)
+print(f"\n成功加载 MIDI: {midi_path}")
+print(f"检测到 {n_tracks} 个轨道:")
+
+for i, inst in enumerate(midi.instruments):
+    name = inst.name if inst.name else "未命名轨道"
+    notes_count = len(inst.notes)
+    is_drum = " (打击乐)" if inst.is_drum else ""
+    print(f"  [{i}] {name} - {notes_count} 个音符{is_drum}")
+
+# --- 轨道配置交互 ---
+available_classes = ["哈基米", "哈基米only", "曼波only"]
+print("\n可选角色:")
+for i, cls in enumerate(available_classes):
+    print(f"  [{i}] {cls}")
+
+track_classes = []
+octave_shift = []
+volume_factor = []
+
+print("\n--- 请配置各轨道参数 (直接回车使用默认值) ---")
+for i, inst in enumerate(midi.instruments):
+    name = inst.name if inst.name else "未命名轨道"
+    is_drum = inst.is_drum
+    
+    if is_drum:
+        print(f"\n轨道 [{i}] {name}: 检测为打击乐，默认静音。")
+        track_classes.append(available_classes[0])
+        octave_shift.append(0)
+        volume_factor.append(0.0)
+        continue
+
+    print(f"\n配置轨道 [{i}] {name}:")
+    
+    # 选择角色
+    def_cls_idx = i % len(available_classes)
+    cls_input = input(f"  选择角色编号 (0-{len(available_classes)-1}, 默认 {def_cls_idx} [{available_classes[def_cls_idx]}]): ")
+    if cls_input.strip() == "":
+        track_classes.append(available_classes[def_cls_idx])
+    else:
+        try:
+            idx = int(cls_input)
+            track_classes.append(available_classes[idx if 0 <= idx < len(available_classes) else def_cls_idx])
+        except:
+            track_classes.append(available_classes[def_cls_idx])
+
+    # 八度偏移
+    shift_input = input("  八度偏移 (例如 -1, 0, 1, 默认 0): ")
+    try:
+        octave_shift.append(int(shift_input) if shift_input.strip() != "" else 0)
+    except:
+        octave_shift.append(0)
+
+    # 音量
+    vol_input = input("  音量比例 (0.0-1.0, 默认 1.0): ")
+    try:
+        volume_factor.append(float(vol_input) if vol_input.strip() != "" else 1.0)
+    except:
+        volume_factor.append(1.0)
 
 SIMULTANEOUS_THRESHOLD = 0.05
 
+# 自动确定结束时间（MIDI 长度 + 2秒缓冲）
 start_time = 0
-end_time = 600
+midi_duration = midi.get_end_time()
+end_time = midi_duration + 2.0 
+
+print(f"音频长度预计: {end_time:.2f} 秒")
 
 sr = 44100
 frame_period = 5.0
@@ -193,8 +285,6 @@ def build_events(note2word):
     events.sort(key=lambda e: (e["start"], e["end"]))
 
     return events
-
-midi = pretty_midi.PrettyMIDI(midi_path)
 
 track_models = []
 
