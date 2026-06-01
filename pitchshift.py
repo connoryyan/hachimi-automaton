@@ -158,3 +158,64 @@ def preprocess_sample(sample_path, cons_frame, sr=44100, frame_period=5.0):
 # os.makedirs(os.path.dirname(out_path), exist_ok=True)
 # sf.write(out_path, y_out, sr)
 # print(f"已生成: {out_path}")
+
+def main():
+    sample_path = "./assets/samples/哈.wav"
+    out_path = "./output/debug_note.wav"
+
+    sr = 44100
+    frame_period = 5.0
+
+    # =========================
+    # 1. 预处理
+    # =========================
+    preproc = preprocess_sample(
+        sample_path=sample_path,
+        cons_frame=8,
+        sr=sr,
+        frame_period=frame_period
+    )
+
+    # =========================
+    # 2. 测试参数
+    # =========================
+    target_pitch = 50 
+    duration_sec = 5
+    dur_samples = int(duration_sec * sr)
+
+    # =========================
+    # 3. 合成（只用 channel 0 + 1）
+    # =========================
+    y = synthesize_note(
+        preproc=preproc,
+        target_pitch=target_pitch,
+        dur_samples=dur_samples,
+        sr=sr,
+        frame_period=frame_period,
+        ap_scale=0.05,
+        sp_scale=1.1
+    )
+
+    # =========================
+    # 4. 转 mono（避免写 wav 问题）
+    # =========================
+    y_mono = y.mean(axis=1) if y.ndim == 2 else y
+
+    # =========================
+    # 5. 防爆音归一化
+    # =========================
+    maxv = np.max(np.abs(y_mono))
+    if maxv > 0:
+        y_mono = y_mono / maxv * 0.95
+
+    # =========================
+    # 6. 输出
+    # =========================
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    sf.write(out_path, y_mono, sr)
+
+    print(f"[OK] generated: {out_path}")
+
+
+if __name__ == "__main__":
+    main()

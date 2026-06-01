@@ -38,8 +38,8 @@ GM_PROGRAMS = [
     "Telephone Ring", "Helicopter", "Applause", "Gunshot"
 ]
 
-folder_path = "./assets/midi/haydnop76/"
-midi_path = folder_path + "haydn_string_quartet_76_3_score_1_(c)unknown.mid"
+folder_path = "./assets/midi/rachop18-2/"
+midi_path = folder_path + "rachmaninov_concerto_2_2_(c)galimberti.mid"
 
 pm = pretty_midi.PrettyMIDI(midi_path)
 
@@ -94,5 +94,5 @@ def audio_preview():
         wavfile.write(out_path, fs, audio_int16)
         print("Saved track:", out_path)
 
-plot_piano_roll()
+# plot_piano_roll()
 audio_preview()

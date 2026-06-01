@@ -11,14 +11,14 @@ import os
 from tqdm import tqdm
 import matplotlib.patches as mpatches
 
-lyrics_path = "./output/tchop35a/tchop35a_lyrics.json"
-out_path="./output/tchop35a/"
+lyrics_path = "./output/rachmaninov_concerto_2_2_(c)galimberti/rachmaninov_concerto_2_2_(c)galimberti_lyrics.json"
+out_path="./output/rachmaninov_concerto_2_2_(c)galimberti/"
 gif_path="./assets/animation/帝宝挥拳加油.gif"
 model_path="./models/character_markov/"
 
 def draw(model, figsize=(16,9), prob_threshold=0.01,
                 label_fmt="{:.2f}", layout="spring",
-                node_size=1800, font_size=11, save_path=None):
+                node_size=1800, font_size=20, save_path=None):
 
     # --------- Normalize Transition Matrix ---------
     plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -109,7 +109,7 @@ def draw(model, figsize=(16,9), prob_threshold=0.01,
     nx.draw_networkx_edge_labels(
         G, pos,
         edge_labels=edge_labels,
-        font_size=font_size-1,
+        font_size=font_size/2,
         font_color="#333333",
         rotate=False
     )
@@ -171,7 +171,7 @@ def slice_events(events, t0, t1):
 
     return sliced
 
-def draw_static_background(ax, G, pos, prob_threshold=0.01, label_fmt="{:.2f}", node_size=1800, font_size=11):
+def draw_static_background(ax, G, pos, prob_threshold=0.01, label_fmt="{:.2f}", node_size=1800, font_size=20):
     ax.set_facecolor("#f8f9fa")  # 背景色
     ax.axis("off")
 
@@ -238,7 +238,7 @@ def draw_static_background(ax, G, pos, prob_threshold=0.01, label_fmt="{:.2f}", 
     nx.draw_networkx_edge_labels(
         G, pos,
         edge_labels=edge_labels,
-        font_size=font_size-1,
+        font_size=font_size/2,
         font_color="#333333",
         rotate=False,
         label_pos=label_pos_dict[(u, v)],
@@ -416,18 +416,18 @@ if __name__ == "__main__":
     with open(model_path + "哈基米.json", "r", encoding="utf-8") as f:
         model = json.load(f)
 
-    G, pos = draw(model, save_path=out_path + "track0.png")
+    G, pos = draw(model, save_path=out_path + "track9.png")
 
-    slice_events_list = slice_events(events, t0=0.0, t1=600)
+    slice_events_list = slice_events(events, t0=500, t1=728)
     animate_markov_track(
         G=G,   
         pos=pos,
         events=slice_events_list,
-        track_id=0,
-        out_path="./output/tchop35a/track0.mp4",
+        track_id=9,
+        out_path=out_path + "track9.mp4",
         gif_path="./assets/animation/帝宝摇.gif",
         fps=30,
-        figsize=(10, 16)
+        figsize=(16, 9)
     )
 
     # video_path = "./output/tchop35a/track0.mp4"

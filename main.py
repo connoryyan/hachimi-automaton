@@ -63,11 +63,66 @@ track_classes = []
 octave_shift = []
 volume_factor = []
 
+default_track_classes = [
+    0,0,0,0,0,0,0,0,0,   # 0-8 静音
+
+    0,                   # 9 Piano
+
+    2,                   # 10 Violin I Synth
+    2,                   # 11 Violin I Pizz
+    2,                   # 12 Violin I Main
+
+    2,                   # 13 Violin II Synth
+    2,                   # 14 Violin II Main
+    2,                   # 15 Violin II Pizz
+
+    0,0,0,0,0,0,0,0      # 16-23 静音
+]
+default_octave_shift = [
+    0,0,0,0,0,0,0,0,0,
+
+    1,    # Piano
+
+    -1,    # Vln I Synth
+    -1,    # Vln I Pizz
+    -1,    # Vln I Main
+
+    -1,    # Vln II Synth
+    -1,    # Vln II Main
+    -1,    # Vln II Pizz
+
+    0,0,0,0,0,0,0,0
+]
+default_volume_factor = [
+    0,0,0,0,0,0,0,0,0,
+
+    0.7,   # Piano
+
+    1,   # Vln I Synth
+    1,   # Vln I Pizz
+    1,   # Vln I Main
+
+    0,   # Vln II Synth
+    0,   # Vln II Main
+    0,   # Vln II Pizz
+
+    0,0,0,0,0,0,0,0
+]
+
 print("\n--- 请配置各轨道参数 (直接回车使用默认值) ---")
 for i, inst in enumerate(midi.instruments):
     name = inst.name if inst.name else "未命名轨道"
     is_drum = inst.is_drum
-    
+
+    def_cls_idx = i
+    default_cls = available_classes[default_track_classes[i]]
+    default_shift = default_octave_shift[i]
+    default_vol = default_volume_factor[i]
+
+    # default_track_classes.append(default_cls)
+    # default_octave_shift.append(default_shift)
+    # default_volume_factor.append(default_vol)
+
     if is_drum:
         print(f"\n轨道 [{i}] {name}: 检测为打击乐，默认静音。")
         track_classes.append(available_classes[0])
@@ -76,47 +131,57 @@ for i, inst in enumerate(midi.instruments):
         continue
 
     print(f"\n配置轨道 [{i}] {name}:")
-    
-    # 选择角色
-    def_cls_idx = i % len(available_classes)
-    cls_input = input(f"  选择角色编号 (0-{len(available_classes)-1}, 默认 {def_cls_idx} [{available_classes[def_cls_idx]}]): ")
+
+    # ===== 角色 =====
+    cls_input = input(
+        f"  选择角色编号 (0-{len(available_classes)-1}, 默认 {def_cls_idx} [{default_cls}]): "
+    )
+
     if cls_input.strip() == "":
-        track_classes.append(available_classes[def_cls_idx])
+        track_classes.append(default_cls)
     else:
         try:
             idx = int(cls_input)
-            track_classes.append(available_classes[idx if 0 <= idx < len(available_classes) else def_cls_idx])
+            track_classes.append(
+                available_classes[idx if 0 <= idx < len(available_classes) else def_cls_idx]
+            )
         except:
-            track_classes.append(available_classes[def_cls_idx])
+            track_classes.append(default_cls)
 
-    # 八度偏移
+    # ===== 八度 =====
     shift_input = input("  八度偏移 (例如 -1, 0, 1, 默认 0): ")
-    try:
-        octave_shift.append(int(shift_input) if shift_input.strip() != "" else 0)
-    except:
-        octave_shift.append(0)
 
-    # 音量
+    if shift_input.strip() == "":
+        octave_shift.append(default_shift)
+    else:
+        try:
+            octave_shift.append(int(shift_input))
+        except:
+            octave_shift.append(default_shift)
+
+    # ===== 音量 =====
     vol_input = input("  音量比例 (0.0-1.0, 默认 1.0): ")
-    try:
-        volume_factor.append(float(vol_input) if vol_input.strip() != "" else 1.0)
-    except:
-        volume_factor.append(1.0)
+
+    if vol_input.strip() == "":
+        volume_factor.append(default_vol)
+    else:
+        try:
+            volume_factor.append(float(vol_input))
+        except:
+            volume_factor.append(default_vol)
 
 SIMULTANEOUS_THRESHOLD = 0.05
 
 # 自动确定结束时间（MIDI 长度 + 2秒缓冲）
-start_time = 0
+start_time = 500
 midi_duration = midi.get_end_time()
+# midi_duration = 120
 end_time = midi_duration + 2.0 
 
 print(f"音频长度预计: {end_time:.2f} 秒")
 
 sr = 44100
 frame_period = 5.0
-
-octave_shift = [0, 0, 2]
-volume_factor = [1, 0.6, 0.7]
 
 cons_frames = {
     "哈": 3,
@@ -139,13 +204,6 @@ cons_frames = {
 }
 
 def generate_lyrics(midi, models, start_time=0.0, end_time=None):
-    """
-    midi: pretty_midi.PrettyMIDI 对象
-    models: list of model 对象，每个轨道对应一个 model
-    返回:
-        track_words: List[List[str]] 每轨词序列
-        note2word: List[Dict[note, word]] 每轨音符到词的映射
-    """
     note2word = []
     track_words_all = []
 
@@ -159,14 +217,14 @@ def generate_lyrics(midi, models, start_time=0.0, end_time=None):
     pbar = tqdm(total=len(valid_notes), desc="编写歌词中：")
 
     for idx, inst in enumerate(midi.instruments):
-        
+
         notes = sorted(inst.notes, key=lambda n: (n.start, n.end))
         if not notes:
             note2word.append({})
             track_words_all.append([])
             continue
 
-        # 分组
+        # ===== 和弦分组 =====
         groups = []
         current_group = [notes[0]]
         current_start = notes[0].start
@@ -180,14 +238,12 @@ def generate_lyrics(midi, models, start_time=0.0, end_time=None):
                 current_start = note.start
         groups.append(current_group)
 
-        # 当前轨道使用的模型
         model = models[idx] if idx < len(models) else models[0]
         if not model:
             note2word.append({})
             track_words_all.append([])
             continue
 
-        # 生成歌词
         current_token = random.choice(list(model.keys()))
         mapping = {}
         track_words = []
@@ -195,13 +251,21 @@ def generate_lyrics(midi, models, start_time=0.0, end_time=None):
         for group in groups:
             word = current_token
             track_words.append(word)
-            for note in group:
-                pbar.update(1)
-                mapping[note] = word
-            # 下一个词
+
+            main_note = max(group, key=lambda n: n.pitch)
+
+            pbar.update(len(group))
+
+            mapping[main_note] = word
+
+            # next token
             next_options = model.get(current_token, {})
             if next_options:
-                current_token = random.choices(list(next_options.keys()), weights=list(next_options.values()), k=1)[0]
+                current_token = random.choices(
+                    list(next_options.keys()),
+                    weights=list(next_options.values()),
+                    k=1
+                )[0]
             else:
                 current_token = random.choice(list(model.keys()))
 
@@ -242,8 +306,13 @@ def synthesize_midi(preproc, note2word, midi, sr=44100, frame_period=5.0, start_
         for note in instrument.notes:
             if note.end <= start_time or note.start >= total_time:
                 continue
-            
+
+            word = note2word[idx].get(note)
+            if word is None:
+                continue
+
             pbar.update(1)
+
             start = max(int((note.start-start_time)*sr), 0)
             end   = min(int((note.end-start_time)*sr), n_samples)
             dur   = end - start
@@ -251,9 +320,17 @@ def synthesize_midi(preproc, note2word, midi, sr=44100, frame_period=5.0, start_
                 continue
 
             target_pitch = note.pitch + shift
-            y_note = synthesize_note(preproc[note2word[idx][note]], target_pitch, dur,
-                                     sr=sr, frame_period=frame_period,
-                                     ap_scale=ap_scale, sp_scale=sp_scale)
+
+            y_note = synthesize_note(
+                preproc[word],
+                target_pitch,
+                dur,
+                sr=sr,
+                frame_period=frame_period,
+                ap_scale=ap_scale,
+                sp_scale=sp_scale
+            )
+
             y_stereo[start:end, :] += y_note * vol
 
     max_amp = np.max(np.abs(y_stereo))
@@ -286,6 +363,84 @@ def build_events(note2word):
 
     return events
 
+def sec_to_srt(t):
+    h = int(t // 3600)
+    m = int((t % 3600) // 60)
+    s = int(t % 60)
+    ms = int((t - int(t)) * 1000)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+
+def make_track_srt(
+    note2word,
+    track_idx,
+    output_path,
+    reset_gap=1.0,
+    max_duration=2.5,
+    max_len=12
+):
+    items = [
+        {
+            "start": n.start,
+            "end": n.end,
+            "word": w
+        }
+        for n, w in note2word[track_idx].items()
+    ]
+
+    items.sort(key=lambda x: x["start"])
+
+    subtitles = []
+
+    text = ""
+    seg_start = None
+    prev_t = None
+    idx = 1
+
+    for i, it in enumerate(items):
+        start = it["start"]
+        word = it["word"]
+
+        # reset segment（断句）
+        if prev_t is not None and start - prev_t > reset_gap:
+            text = ""
+            seg_start = None
+
+        # init segment start
+        if seg_start is None:
+            seg_start = start
+
+        # accumulate text（token累积显示）
+        text += word
+
+        # max length protection（防爆）
+        if len(text) > max_len:
+            text = word
+            seg_start = start
+
+        # compute end time（关键：不重叠）
+        if i + 1 < len(items):
+            next_start = items[i + 1]["start"]
+            end_time = min(next_start, start + max_duration)
+        else:
+            end_time = start + max_duration
+
+        # 最小显示时长（防闪烁）
+        if end_time - seg_start < 0.08:
+            end_time = seg_start + 0.08
+
+        subtitles.append((idx, seg_start, end_time, text))
+
+        idx += 1
+        prev_t = start
+
+    # write SRT
+    with open(output_path, "w", encoding="utf-8-sig") as f:
+        for idx, s, e, t in subtitles:
+            f.write(f"{idx}\n")
+            f.write(f"{sec_to_srt(s)} --> {sec_to_srt(e)}\n")
+            f.write(f"{t}\n\n")
+
 track_models = []
 
 for cls in track_classes:
@@ -300,6 +455,35 @@ track_words, note2word = generate_lyrics(midi, track_models)
 events = build_events(note2word)
 with open(out_lyrics_path, "w", encoding="utf-8") as f:
     json.dump(events, f, ensure_ascii=False, indent=2)
+
+# with open(out_lyrics_path, "r", encoding="utf-8") as f:
+#     events = json.load(f)
+
+# note2word = [dict() for _ in midi.instruments]
+
+# for event in events:
+
+#     if event["end"] < start_time:
+#         continue
+
+#     if event["start"] > end_time:
+#         continue
+
+#     track_idx = event["track"]
+
+#     start = event["start"]
+#     end = event["end"]
+#     pitch = event["pitch"]
+#     word = event["state"]
+
+#     for note in midi.instruments[track_idx].notes:
+#         if (
+#             note.pitch == pitch
+#             and abs(note.start - start) < 1e-6
+#             and abs(note.end - end) < 1e-6
+#         ):
+#             note2word[track_idx][note] = word
+#             break
 
 preproc = {}
 for cls in track_classes:
@@ -316,7 +500,15 @@ y_out = stereo_spread(y_out.T, spread_amount=0.15).T
 y_out = multitap_delay(y_out, sr)
 y_out = hf_damping(y_out, sr, cutoff=10000)
 
-y_out = soft_normalize(y_out, 0.95)
-sf.write(out_path, y_out, sr)
-print(f"音频已保存至 {out_path}")
+make_track_srt(
+    note2word,
+    track_idx=9,
+    output_path=output_dir + "track9.srt",
+    reset_gap=1.0,
+    max_len=12
+)
+
+# y_out = soft_normalize(y_out, 0.95)
+# sf.write(out_path, y_out, sr)
+# print(f"音频已保存至 {out_path}")
 
