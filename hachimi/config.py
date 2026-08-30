@@ -38,7 +38,25 @@ CONS_FRAMES: dict[str, int] = {
 }
 
 # ---- 角色名称 ----
+# 注意：ALPHABET 中的 "曼波"（含 欧马吉利哇夏达不耶）因缺少对应采样音频，
+# 暂不放入可合成列表；此处仅保留有采样支持的类别。
 AVAILABLE_CLASSES = ["哈基米", "哈基米only", "曼波only"]
+
+# ---- 歌词生成模型 ----
+MODEL_KIND = "markov"  # "markov" 或 "transformer"
+
+# ---- Transformer 模型参数 ----
+TRANSFORMER = {
+    "block_size": 32,
+    "n_embd": 64,
+    "n_head": 4,
+    "n_layer": 3,
+    "steps": 1500,
+    "batch_size": 32,
+    "lr": 1e-3,
+    "temperature": 1.0,
+    "seed": 1337,
+}
 
 # ---- 默认轨道配置 ----
 # 索引对应 MIDI 轨道号

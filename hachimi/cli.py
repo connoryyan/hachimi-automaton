@@ -16,6 +16,27 @@ from hachimi.config import (
 logger = logging.getLogger(__name__)
 
 
+def select_model_kind() -> str:
+    """交互式选择歌词生成模型类型。
+
+    Returns:
+        ``"markov"`` 或 ``"transformer"``。
+    """
+    print("\n可选歌词生成模型：")
+    print("  [0] markov      字符马尔科夫链（快、稳定）")
+    print("  [1] transformer GPT-2 式神经网络（更连贯）")
+
+    while True:
+        choice = input("请选择模型编号 (默认 0 [markov]): ").strip()
+        if choice == "":
+            return "markov"
+        if choice == "0":
+            return "markov"
+        if choice == "1":
+            return "transformer"
+        print("输入无效，请输入 0 或 1。")
+
+
 def select_midi() -> str:
     """交互式选择 MIDI 文件。
 

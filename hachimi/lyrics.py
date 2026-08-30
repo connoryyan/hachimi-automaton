@@ -1,14 +1,12 @@
 """歌词生成：将 MIDI 音符映射为马尔科夫链生成的字符序列。"""
 
-import random
-import json
 import logging
-from typing import Any
 
 import pretty_midi
 import numpy as np
 from tqdm import tqdm
 
+from hachimi.base import LyricsModel
 from hachimi.config import SIMULTANEOUS_THRESHOLD, START_TIME
 
 logger = logging.getLogger(__name__)
@@ -16,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 def generate_lyrics(
     midi: pretty_midi.PrettyMIDI,
-    models: list[dict],
+    models: list[LyricsModel | None],
     start_time: float = START_TIME,
     end_time: float | None = None,
 ) -> tuple[list[list[str]], list[dict]]:
-    """根据 MIDI 和马氏模型为每个音符分配字符。
+    """根据 MIDI 和歌词模型为每个音符分配字符。
 
     Args:
         midi: PrettyMIDI 对象。
-        models: 每个轨道的马尔科夫模型（None 表示静音）。
+        models: 每个轨道的歌词模型（Markov 或 Transformer，None 表示静音）。
         start_time: 开始时间。
         end_time: 结束时间（None = MIDI 总长）。
 
@@ -70,26 +68,19 @@ def generate_lyrics(
             track_words_all.append([])
             continue
 
-        current_token = random.choice(list(model.keys()))
+        context = ""
         mapping: dict = {}
         track_words: list[str] = []
 
         for group in groups:
-            word = current_token
+            word = model.sample(context)
             track_words.append(word)
             main_note = max(group, key=lambda n: n.pitch)
             pbar.update(len(group))
             mapping[main_note] = word
 
-            next_options = model.get(current_token, {})
-            if next_options:
-                current_token = random.choices(
-                    list(next_options.keys()),
-                    weights=list(next_options.values()),
-                    k=1,
-                )[0]
-            else:
-                current_token = random.choice(list(model.keys()))
+            # 累积上文（Markov 只看最后一位；Transformer 内部会截断到 block_size）
+            context = (context + word)[-256:]
 
         note2word.append(mapping)
         track_words_all.append(track_words)
