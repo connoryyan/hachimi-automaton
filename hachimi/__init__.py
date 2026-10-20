@@ -18,7 +18,7 @@ from hachimi.tokenization import Tokenizer, train_bpe
 from hachimi.base import LyricsModel, load_songs
 from hachimi.markov import MarkovModel
 from hachimi.transformer import TransformerModel
-from hachimi.models import create_model
+from hachimi.models import create_model, load_model
 
 __all__ = [
     "Tokenizer",
@@ -28,4 +28,5 @@ __all__ = [
     "MarkovModel",
     "TransformerModel",
     "create_model",
+    "load_model",
 ]

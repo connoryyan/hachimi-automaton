@@ -80,6 +80,15 @@ class MarkovModel(LyricsModel):
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self._model, f, ensure_ascii=False, indent=2)
 
+    @classmethod
+    def load(cls, path: str) -> "MarkovModel":
+        """从 JSON 文件加载转移概率矩阵。"""
+        with open(path, "r", encoding="utf-8") as f:
+            model = json.load(f)
+        m = cls()
+        m._model = model
+        return m
+
 
 # ---------------------------------------------------------------------------
 # 兼容旧函数式接口（main.py 旧代码、外部脚本）

@@ -33,7 +33,7 @@ from hachimi.config import (
     MULTITAP_TAPS,
     HF_DAMPING_CUTOFF,
 )
-from hachimi.models import create_model
+from hachimi.models import create_model, load_model
 from hachimi.synthesis import preprocess_sample
 from hachimi.audio import vocal_low_cut, stereo_spread, multitap_delay, hf_damping
 from hachimi.lyrics import generate_lyrics, build_events, make_track_srt
@@ -72,7 +72,7 @@ def main() -> None:
         n_tracks, instrument_names, is_drum_flags
     )
 
-    # ---- 4. 训练歌词模型（每个类别只训练一次） ----
+    # ---- 4. 加载或训练歌词模型（每个类别只处理一次；已有缓存则直接加载） ----
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     model_cache: dict[str, LyricsModel] = {}
@@ -81,15 +81,24 @@ def main() -> None:
     for cls in track_classes:
         if cls not in model_cache:
             if kind == "markov":
-                model = create_model("markov", allowed_classes=[cls])
-                draw_markov_graph(
-                    model.to_dict(), save_path=os.path.join(MODEL_DIR, f"{cls}.png")
-                )
-                with open(os.path.join(MODEL_DIR, f"{cls}.json"), "w", encoding="utf-8") as f:
-                    json.dump(model.to_dict(), f, ensure_ascii=False, indent=2)
+                model_path = os.path.join(MODEL_DIR, f"{cls}.json")
+                if os.path.exists(model_path):
+                    model = load_model("markov", model_path)
+                    logger.info("加载已有模型 [markov] %s", cls)
+                else:
+                    model = create_model("markov", allowed_classes=[cls])
+                    model.save(model_path)
+                    draw_markov_graph(
+                        model.to_dict(), save_path=os.path.join(MODEL_DIR, f"{cls}.png")
+                    )
             else:
-                model = create_model("transformer", allowed_classes=[cls], **TRANSFORMER)
-                model.save(os.path.join(MODEL_DIR, f"{cls}.npz"))
+                model_path = os.path.join(MODEL_DIR, f"{cls}.npz")
+                if os.path.exists(model_path):
+                    model = load_model("transformer", model_path)
+                    logger.info("加载已有模型 [transformer] %s", cls)
+                else:
+                    model = create_model("transformer", allowed_classes=[cls], **TRANSFORMER)
+                    model.save(model_path)
             model_cache[cls] = model
         track_models.append(model_cache[cls])
 
