@@ -1,12 +1,3 @@
-"""GPT-2 风格的 decoder-only Transformer 歌词模型（纯 numpy 实现，轻量参数）。
-
-结构：词嵌入 + 位置嵌入 + 多层因果自注意力（LayerNorm 前置 + 残差 + GELU MLP）
-+ 最终 LayerNorm + 与词嵌入共享权重的输出头（tied embeddings）。
-不需要 PyTorch，词表约 20 字符、语料约 8KB 时 CPU 数秒即可完成训练。
-"""
-
-from __future__ import annotations
-
 import logging
 import random
 
@@ -82,12 +73,8 @@ def _cross_entropy(logits: np.ndarray, targets: np.ndarray):
     return loss, d.reshape(B, T, V)
 
 
-# ---------------------------------------------------------------------------
-# GPT 核心（前向 + 反向）
-# ---------------------------------------------------------------------------
-
 class GPT:
-    """极简 GPT：仅实现前向、反向和参数遍历，不含训练循环。"""
+    """一个简单的GPT类Transformer。仅实现前向、反向和参数遍历，不含训练循环。"""
 
     def __init__(
         self,
@@ -146,7 +133,6 @@ class GPT:
 
     # ---- 前向 ----
     def forward(self, idx: np.ndarray) -> np.ndarray:
-        """idx (B,T) → logits (B,T,V)；缓存中间量供反向使用。"""
         B, T = idx.shape
         C, H, D = self.n_embd, self.n_head, self.head_dim
         p = self.params
