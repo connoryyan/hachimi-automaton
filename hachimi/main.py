@@ -134,14 +134,28 @@ def main() -> None:
     y_out = multitap_delay(y_out, SR, decay=MULTITAP_DECAY, delay_ms=MULTITAP_DELAY_MS, num_taps=MULTITAP_TAPS)
     y_out = hf_damping(y_out, SR, cutoff=HF_DAMPING_CUTOFF)
 
-    # ---- 9. 生成 SRT 字幕 ----
-    make_track_srt(
-        note2word,
-        track_idx=9,
-        output_path=os.path.join(output_dir, "track9.srt"),
-        reset_gap=1.0,
-        max_len=12,
-    )
+    # ---- 9. 生成 SRT 字幕（选择第一个可听且有歌词的轨道） ----
+    srt_track_idx = None
+    for idx, (words_map, vol) in enumerate(zip(note2word, volume_factor)):
+        if words_map and vol > 0:
+            srt_track_idx = idx
+            break
+    if srt_track_idx is None:
+        for idx, words_map in enumerate(note2word):
+            if words_map:
+                srt_track_idx = idx
+                break
+
+    if srt_track_idx is not None:
+        make_track_srt(
+            note2word,
+            track_idx=srt_track_idx,
+            output_path=os.path.join(output_dir, f"track{srt_track_idx}.srt"),
+            reset_gap=1.0,
+            max_len=12,
+        )
+    else:
+        logger.warning("没有可生成字幕的轨道，跳过 SRT")
 
     out_path = os.path.join(output_dir, f"{project_name}.wav")
     print(f"\n音频已生成: {out_path}")

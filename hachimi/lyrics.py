@@ -113,7 +113,7 @@ def build_events(note2word: list[dict]) -> list[dict]:
 
 
 def sec_to_srt(t: float) -> str:
-    """秒数 → SRT 时间戳格式 (HH:MM:SS,mmm)。"""
+    """秒数转换为 SRT 的时间戳格式 (HH:MM:SS,mmm)。"""
     h = int(t // 3600)
     m = int((t % 3600) // 60)
     s = int(t % 60)
@@ -139,6 +139,10 @@ def make_track_srt(
         max_duration: 字幕最大显示时长（秒）。
         max_len: 字幕最大字符数。
     """
+    if track_idx >= len(note2word) or not note2word[track_idx]:
+        logger.warning("SRT: 轨道 %d 不存在或为空，跳过", track_idx)
+        return
+
     items = [
         {"start": n.start, "end": n.end, "word": w}
         for n, w in note2word[track_idx].items()
